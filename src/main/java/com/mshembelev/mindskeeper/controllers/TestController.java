@@ -28,5 +28,4 @@ public class TestController {
     public String exampleAdmin() {
         return "Hello, admin!";
     }
-
 }
