@@ -1,10 +1,12 @@
 package com.mshembelev.mindskeeper.services;
 
 
+import com.mshembelev.mindskeeper.dto.auth.UpdateResponse;
 import com.mshembelev.mindskeeper.models.UserModel;
 import com.mshembelev.mindskeeper.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -72,5 +74,21 @@ public class UserService {
         // Получение имени пользователя из контекста Spring Security
         var username = SecurityContextHolder.getContext().getAuthentication().getName();
         return getByUsername(username);
+    }
+
+    /**
+     * Получение текущего пользователя по токену
+     *
+     * @return текущий пользователь
+     */
+    public UpdateResponse update() {
+        UserModel user = getCurrentUser();
+        UpdateResponse updateResponse = UpdateResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .enabled(user.isEnabled())
+                .build();
+        return updateResponse;
     }
 }
