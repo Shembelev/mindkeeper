@@ -1,7 +1,6 @@
 package com.mshembelev.mindskeeper.services;
 
 
-import com.mshembelev.mindskeeper.models.Role;
 import com.mshembelev.mindskeeper.models.UserModel;
 import com.mshembelev.mindskeeper.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,6 @@ public class UserService {
      */
     public UserModel create(UserModel user) {
         if (repository.existsByUsername(user.getUsername())) {
-            // TODO: добавить свои исключения
             throw new RuntimeException("Пользователь с таким именем уже существует");
         }
 
