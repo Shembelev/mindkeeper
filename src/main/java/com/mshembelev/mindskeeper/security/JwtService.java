@@ -80,9 +80,10 @@ public class JwtService {
      * @return токен
      */
     private String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        Date expirationDate = new Date(System.currentTimeMillis() + 60000 * 60 * 24 );
         return Jwts.builder().setClaims(extraClaims).setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 100000 * 60 * 24))
+                .setExpiration(expirationDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256).compact();
     }
 

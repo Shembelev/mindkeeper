@@ -6,7 +6,6 @@ import com.mshembelev.mindskeeper.models.UserModel;
 import com.mshembelev.mindskeeper.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,6 @@ public class UserService {
         if (repository.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Пользователь с таким именем уже существует");
         }
-
         if (repository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Пользователь с таким email уже существует");
         }
