@@ -7,6 +7,8 @@ import com.mshembelev.mindskeeper.models.NoteModel;
 import com.mshembelev.mindskeeper.models.UserModel;
 import com.mshembelev.mindskeeper.repositories.NoteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -34,13 +36,14 @@ public class NoteService {
      *
      * @return созданная заметка
      */
-    public NoteModel createNote(CreateNoteRequest request) {
-        UserModel user = userService.getCurrentUser();
-        NoteModel note = NoteModel.builder()
-                .text(request.getText())
-                .userId(user.getId())
-                .build();
-        return saveNote(note);
+    public ResponseEntity<?> createNote(CreateNoteRequest request) {
+            UserModel user = userService.getCurrentUser();
+            NoteModel note = NoteModel.builder()
+                    .text(request.getText())
+                    .userId(user.getId())
+                    .build();
+            NoteModel savedNote = saveNote(note);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedNote);
     }
 
     /**
