@@ -10,6 +10,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -29,6 +31,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static final String HEADER_NAME = "Authorization";
     private final JwtService jwtService;
     private final UserService userService;
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
     protected void doFilterInternal(
@@ -78,6 +82,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void handleAuthenticationException(AuthenticationException exception, HttpServletResponse response) throws IOException {
+        logger.warn("Неудачная попытка входа в аккаунт. Причина - " + exception.getMessage());
         sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
     }
 
@@ -86,6 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void handleOtherException(Exception exception, HttpServletResponse response) throws IOException {
+        logger.error("Ошибка в системе авторизации - " + exception.getMessage());
         sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "Security error");
     }
 

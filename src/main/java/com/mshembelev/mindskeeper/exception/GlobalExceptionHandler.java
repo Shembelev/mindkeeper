@@ -9,10 +9,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
 @ControllerAdvice
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<?> handleUserNotFoundException(UsernameNotFoundException e) {
         return new ResponseEntity<>(new ExceptionResponse(e.getMessage()), HttpStatus.NOT_FOUND);
@@ -20,6 +18,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handleRuntimeException(RuntimeException e) {
+
         return new ResponseEntity<>(new ExceptionResponse("Ошибка:" + " " +e.getMessage()), HttpStatus.BAD_GATEWAY);
     }
 

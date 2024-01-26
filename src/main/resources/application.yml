@@ -1,6 +1,17 @@
 server:
   error:
     include-message: always
+logging:
+  level:
+    guru.springframework.controllers: debug
+    org.springframework.web: info
+    hibernate: error
+  file:
+    name: logs/spring-boot-logging.log
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] %logger{36} - %msg%n"
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/mindskeeper
