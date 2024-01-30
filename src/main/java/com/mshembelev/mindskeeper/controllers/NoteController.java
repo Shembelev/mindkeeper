@@ -43,7 +43,7 @@ public class NoteController {
 
     @Operation(summary = "Удаление заметки")
     @DeleteMapping("/{noteId}")
-    public void deleteNote(@PathVariable("noteId") Long id) throws AccessDeniedException {
+    public void deleteNote(@PathVariable("noteId") Long id){
         noteService.deleteNote(id);
     }
 

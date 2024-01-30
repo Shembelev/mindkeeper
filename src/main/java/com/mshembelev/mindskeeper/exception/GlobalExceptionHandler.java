@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
@@ -18,8 +19,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handleRuntimeException(RuntimeException e) {
-
         return new ResponseEntity<>(new ExceptionResponse("Ошибка:" + " " +e.getMessage()), HttpStatus.BAD_GATEWAY);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<?> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e) {
+        return new ResponseEntity<>(new ExceptionResponse("Данный файл не поддерживается."), HttpStatus.BAD_GATEWAY);
     }
 
     @ExceptionHandler(ValidationRuntimeException.class)
@@ -32,4 +37,5 @@ public class GlobalExceptionHandler {
         }
         return new ResponseEntity<>(new ExceptionResponse(errorMessage.toString()), HttpStatus.BAD_REQUEST);
     }
+
 }
