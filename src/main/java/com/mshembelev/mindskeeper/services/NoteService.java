@@ -68,7 +68,7 @@ public class NoteService {
      */
     public void deleteNote(Long noteId){
         UserModel user = userService.getCurrentUser();
-        if(!checkNotesOwner(noteId, user.getId())) throw new AccessDeniedException("У этого пользователя нет доступа к этой заметке");
+        if(!checkNotesOwner(noteId, user.getId())) throw new AccessDeniedException("У вас нет доступа к этой заметке");
         repository.deleteById(noteId);
     }
 
@@ -79,7 +79,7 @@ public class NoteService {
      */
     public NoteModel updateNote(UpdateNoteRequest request) {
         UserModel user = userService.getCurrentUser();
-        if(!checkNotesOwner(request.getId(), user.getId())) throw new AccessDeniedException("У этого пользователя нет доступа к этой заметке");
+        if(!checkNotesOwner(request.getId(), user.getId())) throw new AccessDeniedException("У вас нет доступа к этой заметке");
         Optional<NoteModel> note = repository.findNoteModelById(request.getId());
         note.get().setText(request.getText());
         return saveNote(note.get());
