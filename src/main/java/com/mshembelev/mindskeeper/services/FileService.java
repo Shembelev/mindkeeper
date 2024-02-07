@@ -144,9 +144,7 @@ public class FileService {
 
     /**
      * Проверка есть ли у пользователя права на файл
-     * @param fileId
-     * @param userId
-     * @return
+     * @return есть ли права на файл у пользователя
      */
     public boolean checkFileOwner(Long fileId, Long userId){
         Optional<FileModel> file = fileRepository.findById(fileId);
@@ -161,9 +159,6 @@ public class FileService {
 
     /**
      * Удаление файла по его id
-     * @param fileId
-     * @return
-     * @throws AccessDeniedException
      */
     public ResponseEntity<?> deleteFile(Long fileId) throws AccessDeniedException {
         UserModel user = userService.getCurrentUser();

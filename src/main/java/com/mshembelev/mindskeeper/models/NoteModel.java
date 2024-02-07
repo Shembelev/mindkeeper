@@ -20,6 +20,12 @@ public class NoteModel {
     @Column(name = "userId", nullable = false)
     private Long userId;
 
-    @Column(name = "text", nullable = false)
+    @Column(name = "title", nullable = false)
+    private String title;
+
+    @Column(name = "text", nullable = false, length = 4096)
     private String text;
+
+    @Column(name = "codeImage", nullable = true, columnDefinition = "TEXT")
+    private String codeImage;
 }

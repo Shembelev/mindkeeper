@@ -1,7 +1,6 @@
 package com.mshembelev.mindskeeper.services;
 
 import com.mshembelev.mindskeeper.dto.note.CreateNoteRequest;
-import com.mshembelev.mindskeeper.dto.note.DeleteNoteRequest;
 import com.mshembelev.mindskeeper.dto.note.UpdateNoteRequest;
 import com.mshembelev.mindskeeper.models.NoteModel;
 import com.mshembelev.mindskeeper.models.UserModel;
@@ -12,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.FileSystemNotFoundException;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,13 +35,18 @@ public class NoteService {
      * @return созданная заметка
      */
     public ResponseEntity<?> createNote(CreateNoteRequest request) {
-            UserModel user = userService.getCurrentUser();
-            NoteModel note = NoteModel.builder()
-                    .text(request.getText())
-                    .userId(user.getId())
-                    .build();
-            NoteModel savedNote = saveNote(note);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedNote);
+        UserModel user = userService.getCurrentUser();
+        NoteModel note = NoteModel.builder()
+                .title(request.getTitle())
+                .text(request.getText())
+                .userId(user.getId())
+                .codeImage(null)
+                .build();
+        if(request.getCodeImage() != null){
+            note.setCodeImage(request.getCodeImage());
+        }
+        NoteModel savedNote = saveNote(note);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedNote);
     }
 
     /**
@@ -73,7 +76,7 @@ public class NoteService {
     }
 
     /**
-     * Удаление заметки
+     * Обновление заметки
      *
      * @return обновленная заметка
      */
