@@ -12,6 +12,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -58,7 +59,7 @@ public class NoteService {
         Optional<NoteModel> note = repository.findNoteModelById(noteId);
         boolean result = false;
         if(note.isPresent()){
-            if(note.get().getUserId() == userId){
+            if(Objects.equals(note.get().getUserId(), userId)){
                 result = true;
             }
         }
@@ -85,6 +86,7 @@ public class NoteService {
         if(!checkNotesOwner(request.getId(), user.getId())) throw new AccessDeniedException("У вас нет доступа к этой заметке");
         Optional<NoteModel> note = repository.findNoteModelById(request.getId());
         note.get().setText(request.getText());
+        //TODO: fix update request
         return saveNote(note.get());
     }
 
@@ -95,7 +97,6 @@ public class NoteService {
      */
     public List<NoteModel> getAllUserNotes() {
         UserModel user = userService.getCurrentUser();
-        List<NoteModel> noteList = repository.findNoteModelsByUserId(user.getId());
-        return noteList;
+        return repository.findNoteModelsByUserId(user.getId());
     }
 }
