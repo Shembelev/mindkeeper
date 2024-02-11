@@ -24,98 +24,147 @@ public class TaskService {
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
 
-    public ResponseEntity<?> createTask(CreateTaskRequest request) {
+    /**
+     * Создание группы задач
+     *
+     * @return обновленный список задач
+     */
+    public ResponseEntity<List<TaskModel>> createGroupTask(List<CreateTaskRequest> request) {
         UserModel user = userService.getCurrentUser();
-        Long currentGroupId = request.getGroupId() != null ? request.getGroupId() : updateGroupId();
-        TaskModel task = TaskModel.builder()
-                .userId(user.getId())
-                .text(request.getText())
-                .currentStatus(false)
-                .groupId(currentGroupId)
-                .build();
-
-        TaskModel savedTask = saveTask(task);
+        List<TaskModel> savedTask = new ArrayList<>();
+        Long groupId = updateGroupId();
+        for (CreateTaskRequest newTask : request) {
+            TaskModel task = TaskModel.builder()
+                    .userId(user.getId())
+                    .text(newTask.getText())
+                    .currentStatus(false)
+                    .groupId(groupId)
+                    .build();
+            savedTask.add(saveTask(task));
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
 
-    public ResponseEntity<?> updateTask(UpdateTaskRequest request) {
+    /**
+     * Обновление группы задач
+     *
+     * @return обновленный список задач
+     */
+    public ResponseEntity<List<TaskModel>> updateGroupTask(List<TaskModel> request) {
         UserModel user = userService.getCurrentUser();
-        if(!checkTaskOwners(request.getId(), user.getId())) throw new AccessDeniedException("У вас нет доступа к этой задаче");
-        TaskModel task = taskRepository.findById(request.getId()).get();
-        task.setText(request.getText());
-        task.setCurrentStatus(request.getCurrentStatus());
-        taskRepository.save(task);
-        return ResponseEntity.status(HttpStatus.OK).body(task);
+        Long groupId = request.get(0).getGroupId();
+        List<TaskModel> usersOldTask = taskRepository.findAllByGroupIdAndUserId(groupId, user.getId()).get();
+        List<TaskModel> newGroupTask = new ArrayList<>();
+
+        for (TaskModel oldTask : usersOldTask) {
+            TaskModel requestDeleteTask = findTaskInListById(request, oldTask.getId());
+            if (requestDeleteTask == null) {
+                taskRepository.deleteById(oldTask.getId());
+            }
+        }
+
+        for (TaskModel taskRequest : request) {
+            TaskModel oldTask = findTaskInListById(usersOldTask, taskRequest.getId());
+            if (oldTask != null) {
+                oldTask.setCurrentStatus(taskRequest.getCurrentStatus());
+                oldTask.setText(taskRequest.getText());
+                newGroupTask.add(saveTask(oldTask));
+            } else {
+                TaskModel task = TaskModel.builder()
+                        .userId(user.getId())
+                        .text(taskRequest.getText())
+                        .currentStatus(taskRequest.getCurrentStatus())
+                        .groupId(groupId)
+                        .build();
+                newGroupTask.add(saveTask(task));
+            }
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(newGroupTask);
     }
 
-    public void deleteTask(Long id) {
-        UserModel user = userService.getCurrentUser();
-        if(!checkTaskOwners(id, user.getId())) throw new AccessDeniedException("У вас нет доступа к этой задаче");
-        taskRepository.deleteById(id);
-    }
-
-    public ResponseEntity<?> getAllTask() {
+    /**
+     * Получние всех задач пользователя по его токену
+     *
+     * @return Список состоящий из списков-групп задач
+     */
+    public ResponseEntity<List<List<TaskModel>>> getAllTask() {
         UserModel user = userService.getCurrentUser();
         List<List<TaskModel>> tasksByGroups = new ArrayList<>();
         List<Long> groupIds = taskRepository.findDistinctGroupIdsByUserId(user.getId());
-        for(Long groupId : groupIds){
+        for (Long groupId : groupIds) {
             Optional<List<TaskModel>> taskModels = taskRepository.findAllByGroupIdAndUserId(groupId, user.getId());
             taskModels.ifPresent(tasksByGroups::add);
         }
         return ResponseEntity.status(HttpStatus.OK).body(tasksByGroups);
     }
 
-    public ResponseEntity<?> updateGroupTask(List<UpdateTaskRequest> request) {
-        UserModel user = userService.getCurrentUser();
-        Long groupId = null;
-        for(UpdateTaskRequest taskRequest : request){
-            System.out.println();
-            Optional<TaskModel> taskOptional = taskRepository.findById(taskRequest.getId());
-            if(taskOptional.isPresent()){
-                TaskModel task = taskOptional.get();
-                if(!task.getUserId().equals(user.getId())) throw new AccessDeniedException("У вас нет доступа к этой задаче");
-                if(groupId == null) groupId = task.getGroupId();
-                if(!Objects.equals(groupId, task.getGroupId())) throw new RuntimeException("Данные задачи не относятся к одной группе");
-                task.setText(taskRequest.getText());
-                task.setCurrentStatus(taskRequest.getCurrentStatus());
-                taskRepository.save(task);
-            }
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(taskRepository.findAllByGroupIdAndUserId(groupId, user.getId()));
-    }
-
+    /**
+     * Удаление группы задач со всеми задачами
+     *
+     */
     public void deleteGroupTask(Long groupId) {
         UserModel user = userService.getCurrentUser();
         taskRepository.deleteAllByGroupIdAndUserId(groupId, user.getId());
     }
 
-    public ResponseEntity<?> getGroupTask(Long groupId) {
+    /**
+     * Получние 1й группы задач
+     *
+     * @return список задач
+     */
+    public ResponseEntity<List<TaskModel>> getGroupTask(Long groupId) {
         UserModel user = userService.getCurrentUser();
         return ResponseEntity.status(HttpStatus.OK).body(taskRepository.findAllByGroupIdAndUserId(groupId, user.getId()).get());
     }
 
 
     //Service
-    public Long updateGroupId(){
+    /**
+     * Обновление номера группы у пользователя
+     *
+     * @return новый номер
+     */
+    public Long updateGroupId() {
         UserModel user = userService.getCurrentUser();
-        user.setGroupId(user.getGroupId()+1);
+        user.setGroupId(user.getGroupId() + 1);
         userRepository.save(user);
         return user.getGroupId();
     }
 
-    public TaskModel saveTask(TaskModel task){
+    /**
+     * Сохранение списка задач в БД
+     *
+     * @return сохраненный список задач
+     */
+    public TaskModel saveTask(TaskModel task) {
         return taskRepository.save(task);
     }
 
-    public Boolean checkTaskOwners(Long taskId, Long userId){
+    /**
+     * Проверка уровня доступа к задаче
+     *
+     * @return есть ли доступ
+     */
+    public Boolean checkTaskOwners(Long taskId, Long userId) {
         Optional<TaskModel> task = taskRepository.findById(taskId);
         boolean result = false;
-        if(task.isPresent()){
-            if(Objects.equals(task.get().getUserId(), userId)){
+        if (task.isPresent()) {
+            if (Objects.equals(task.get().getUserId(), userId)) {
                 result = true;
             }
         }
         return result;
     }
 
+    /**
+     * Поиск задачи в списке по ее id
+     *
+     * @return найденная задача или null
+     */
+    public TaskModel findTaskInListById(List<TaskModel> taskList, Long id) {
+        Optional<TaskModel> taskOptional = taskList.stream()
+                .filter(task -> task.getId().equals(id))
+                .findFirst();
+        return taskOptional.orElse(null);
+    }
 }

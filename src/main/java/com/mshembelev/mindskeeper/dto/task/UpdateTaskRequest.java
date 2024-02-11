@@ -20,4 +20,8 @@ public class UpdateTaskRequest {
     @Schema(description = "Статус задачи", example = "true")
     @NotBlank(message = "Статус задачи должен быть указан")
     private Boolean currentStatus;
+
+    @Schema(description = "Номер группы", example = "1")
+    @NotBlank(message = "Номер группы должен быть указан")
+    private Long groupId;
 }

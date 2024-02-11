@@ -84,10 +84,12 @@ public class NoteService {
     public NoteModel updateNote(UpdateNoteRequest request) {
         UserModel user = userService.getCurrentUser();
         if(!checkNotesOwner(request.getId(), user.getId())) throw new AccessDeniedException("У вас нет доступа к этой заметке");
-        Optional<NoteModel> note = repository.findNoteModelById(request.getId());
-        note.get().setText(request.getText());
-        //TODO: fix update request
-        return saveNote(note.get());
+        Optional<NoteModel> noteModelOptional = repository.findNoteModelById(request.getId());
+        NoteModel note = noteModelOptional.get();
+        note.setText(request.getText());
+        note.setCodeImage(request.getCodeImage());
+        note.setTitle(request.getTitle());
+        return saveNote(note);
     }
 
     /**
