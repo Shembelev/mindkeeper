@@ -1,6 +1,5 @@
 package com.mshembelev.mindskeeper.services;
 
-import com.mshembelev.mindskeeper.dto.SuccessResponse;
 import com.mshembelev.mindskeeper.dto.file.FileInfoResponse;
 import com.mshembelev.mindskeeper.models.FileModel;
 import com.mshembelev.mindskeeper.models.UserModel;
@@ -28,6 +27,7 @@ import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -53,13 +53,12 @@ public class FileService {
      * @throws NoSuchAlgorithmException
      * @throws IOException
      */
-    public ResponseEntity<?> create(MultipartFile multipartFile) throws NoSuchAlgorithmException, IOException {
-        UserModel user = userService.getCurrentUser();
+    public FileInfoResponse create(MultipartFile multipartFile, Long userId) throws NoSuchAlgorithmException, IOException {
         FileModel file = new FileModel();
         file.setName(multipartFile.getOriginalFilename());
         file.setMimeType(multipartFile.getContentType());
         file.setSize(multipartFile.getSize());
-        file.setUserId(user.getId());
+        file.setUserId( userId);
         file.setHash();
         fileRepository.save(file);
         storeFile(multipartFile, file.getHash());
@@ -70,8 +69,8 @@ public class FileService {
                 .id(file.getId())
                 .memeType(file.getMimeType())
                 .build();
-        logger.info("Пользователь " + user.getUsername() + " загрузил файл размером - " + file.getSize());
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        logger.info("Пользователь " + userId + " загрузил файл размером - " + file.getSize());
+        return response;
     }
 
     /**
@@ -90,13 +89,12 @@ public class FileService {
      * @param fileId
      * @return
      */
-    public ResponseEntity<?> getFileById(Long fileId){
+    public ResponseEntity<?> getFileById(Long fileId, Long userId) throws AccessDeniedException {
         Optional<FileModel> fileOptional = fileRepository.findById(fileId);
-
         if(fileOptional.isPresent()){
             FileModel file = fileOptional.get();
             Path filePath = this.fileStorageLocation.resolve(file.getHash());
-            System.out.println(file);
+            if(!Objects.equals(file.getUserId(), userId)) throw new AccessDeniedException("У вас нет доступа к этому файлу");
             try {
                 Resource resource = new UrlResource(filePath.toUri());
                 if (resource.exists() && resource.isReadable()) {
@@ -123,9 +121,8 @@ public class FileService {
      *
      * @return обработанный список (без hash)
      */
-    public ResponseEntity<?> getAllFilesByUser() {
-        UserModel user = userService.getCurrentUser();
-        Optional<List<FileModel>> fileModelOptional = fileRepository.findAllByUserId(user.getId());
+    public List<FileInfoResponse> getAllFilesByUser(Long userId) {
+        Optional<List<FileModel>> fileModelOptional = fileRepository.findAllByUserId( userId);
         if (fileModelOptional.isEmpty()) throw new RuntimeException("У этого пользователя нет файлов.");
         List<FileModel> fileModels = fileModelOptional.get();
         List<FileInfoResponse> fileInfoList = new ArrayList<>();
@@ -139,7 +136,7 @@ public class FileService {
                             .build();
             fileInfoList.add(fileInfoResponse);
         }
-        return new ResponseEntity<>(fileInfoList, HttpStatus.OK);
+        return fileInfoList;
     }
 
     /**
@@ -160,10 +157,8 @@ public class FileService {
     /**
      * Удаление файла по его id
      */
-    public ResponseEntity<?> deleteFile(Long fileId) throws AccessDeniedException {
-        UserModel user = userService.getCurrentUser();
-        if(!checkFileOwner(fileId, user.getId())) throw new AccessDeniedException("У вас нет прав на этот файл.");
+    public void deleteFile(Long fileId, Long userId) throws AccessDeniedException {
+        if(!checkFileOwner(fileId,  userId)) throw new AccessDeniedException("У вас нет прав на этот файл.");
         fileRepository.deleteById(fileId);
-        return new ResponseEntity<>(SuccessResponse.builder().status(HttpStatus.OK.value()).message("Файл успешно удален").build(), HttpStatus.OK);
     }
 }
