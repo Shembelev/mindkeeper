@@ -6,8 +6,6 @@ import com.mshembelev.mindskeeper.models.NoteModel;
 import com.mshembelev.mindskeeper.models.UserModel;
 import com.mshembelev.mindskeeper.repositories.NoteRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -35,19 +33,17 @@ public class NoteService {
      *
      * @return созданная заметка
      */
-    public ResponseEntity<?> createNote(CreateNoteRequest request) {
-        UserModel user = userService.getCurrentUser();
+    public NoteModel createNote(CreateNoteRequest request, Long userId) {
         NoteModel note = NoteModel.builder()
                 .title(request.getTitle())
                 .text(request.getText())
-                .userId(user.getId())
+                .userId(userId)
                 .codeImage(null)
                 .build();
         if(request.getCodeImage() != null){
             note.setCodeImage(request.getCodeImage());
         }
-        NoteModel savedNote = saveNote(note);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedNote);
+        return saveNote(note);
     }
 
     /**
@@ -70,9 +66,8 @@ public class NoteService {
      * Удаление заметки
      *
      */
-    public void deleteNote(Long noteId){
-        UserModel user = userService.getCurrentUser();
-        if(!checkNotesOwner(noteId, user.getId())) throw new AccessDeniedException("У вас нет доступа к этой заметке");
+    public void deleteNote(Long noteId, Long userId){
+        if(!checkNotesOwner(noteId, userId)) throw new AccessDeniedException("У вас нет доступа к этой заметке");
         repository.deleteById(noteId);
     }
 
@@ -81,9 +76,8 @@ public class NoteService {
      *
      * @return обновленная заметка
      */
-    public NoteModel updateNote(UpdateNoteRequest request) {
-        UserModel user = userService.getCurrentUser();
-        if(!checkNotesOwner(request.getId(), user.getId())) throw new AccessDeniedException("У вас нет доступа к этой заметке");
+    public NoteModel updateNote(UpdateNoteRequest request, Long userId) {
+        if(!checkNotesOwner(request.getId(), userId)) throw new AccessDeniedException("У вас нет доступа к этой заметке");
         Optional<NoteModel> noteModelOptional = repository.findNoteModelById(request.getId());
         NoteModel note = noteModelOptional.get();
         note.setText(request.getText());
@@ -97,8 +91,7 @@ public class NoteService {
      *
      * @return список заметок
      */
-    public List<NoteModel> getAllUserNotes() {
-        UserModel user = userService.getCurrentUser();
-        return repository.findNoteModelsByUserId(user.getId());
+    public List<NoteModel> getAllUserNotes(Long userId) {
+        return repository.findNoteModelsByUserId(userId);
     }
 }

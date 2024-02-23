@@ -1,15 +1,11 @@
 package com.mshembelev.mindskeeper.services;
 
 import com.mshembelev.mindskeeper.dto.task.CreateTaskRequest;
-import com.mshembelev.mindskeeper.dto.task.UpdateTaskRequest;
 import com.mshembelev.mindskeeper.models.TaskModel;
 import com.mshembelev.mindskeeper.models.UserModel;
 import com.mshembelev.mindskeeper.repositories.TaskRepository;
 import com.mshembelev.mindskeeper.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -29,7 +25,7 @@ public class TaskService {
      *
      * @return обновленный список задач
      */
-    public ResponseEntity<List<TaskModel>> createGroupTask(List<CreateTaskRequest> request) {
+    public List<TaskModel> createGroupTask(List<CreateTaskRequest> request) {
         UserModel user = userService.getCurrentUser();
         List<TaskModel> savedTask = new ArrayList<>();
         Long groupId = updateGroupId();
@@ -42,7 +38,7 @@ public class TaskService {
                     .build();
             savedTask.add(saveTask(task));
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
+        return savedTask;
     }
 
     /**
@@ -50,7 +46,7 @@ public class TaskService {
      *
      * @return обновленный список задач
      */
-    public ResponseEntity<List<TaskModel>> updateGroupTask(List<TaskModel> request) {
+    public List<TaskModel> updateGroupTask(List<TaskModel> request) {
         UserModel user = userService.getCurrentUser();
         Long groupId = request.get(0).getGroupId();
         List<TaskModel> usersOldTask = taskRepository.findAllByGroupIdAndUserId(groupId, user.getId()).get();
@@ -79,7 +75,7 @@ public class TaskService {
                 newGroupTask.add(saveTask(task));
             }
         }
-        return ResponseEntity.status(HttpStatus.OK).body(newGroupTask);
+        return newGroupTask;
     }
 
     /**
@@ -87,7 +83,7 @@ public class TaskService {
      *
      * @return Список состоящий из списков-групп задач
      */
-    public ResponseEntity<List<List<TaskModel>>> getAllTask() {
+    public List<List<TaskModel>> getAllTask() {
         UserModel user = userService.getCurrentUser();
         List<List<TaskModel>> tasksByGroups = new ArrayList<>();
         List<Long> groupIds = taskRepository.findDistinctGroupIdsByUserId(user.getId());
@@ -95,7 +91,7 @@ public class TaskService {
             Optional<List<TaskModel>> taskModels = taskRepository.findAllByGroupIdAndUserId(groupId, user.getId());
             taskModels.ifPresent(tasksByGroups::add);
         }
-        return ResponseEntity.status(HttpStatus.OK).body(tasksByGroups);
+        return tasksByGroups;
     }
 
     /**
@@ -112,9 +108,9 @@ public class TaskService {
      *
      * @return список задач
      */
-    public ResponseEntity<List<TaskModel>> getGroupTask(Long groupId) {
+    public List<TaskModel> getGroupTask(Long groupId) {
         UserModel user = userService.getCurrentUser();
-        return ResponseEntity.status(HttpStatus.OK).body(taskRepository.findAllByGroupIdAndUserId(groupId, user.getId()).get());
+        return taskRepository.findAllByGroupIdAndUserId(groupId, user.getId()).get();
     }
 
 

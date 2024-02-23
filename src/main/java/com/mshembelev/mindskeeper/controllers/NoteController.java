@@ -5,12 +5,12 @@ import com.mshembelev.mindskeeper.dto.note.UpdateNoteRequest;
 import com.mshembelev.mindskeeper.exception.ValidationRuntimeException;
 import com.mshembelev.mindskeeper.models.NoteModel;
 import com.mshembelev.mindskeeper.services.NoteService;
-import io.jsonwebtoken.ExpiredJwtException;
+import com.mshembelev.mindskeeper.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -23,24 +23,30 @@ import java.util.List;
 @Tag(name = "Заметки")
 public class NoteController {
     private final NoteService noteService;
+    private final UserService userService;
 
     @Operation(summary = "Создание заметки")
     @PostMapping("/")
-    public ResponseEntity<?> createNote(@RequestBody @Valid CreateNoteRequest request, BindingResult bindingResult){
+    public ResponseEntity<NoteModel> createNote(@RequestBody @Valid CreateNoteRequest request, BindingResult bindingResult){
         if (bindingResult.hasErrors()) throw new ValidationRuntimeException(bindingResult);
-        return noteService.createNote(request);
+        Long userId = userService.getCurrentUser().getId();
+        NoteModel savedNote = noteService.createNote(request, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedNote);
     }
 
     @Operation(summary = "Обновление заметки")
     @PostMapping("/update")
-    public NoteModel updateNote(@RequestBody UpdateNoteRequest request){
-        return noteService.updateNote(request);
+    public ResponseEntity<NoteModel> updateNote(@RequestBody UpdateNoteRequest request){
+        Long userId = userService.getCurrentUser().getId();
+        NoteModel savedNote = noteService.updateNote(request, userId);
+        return ResponseEntity.status(HttpStatus.OK).body(savedNote);
     }
 
     @Operation(summary = "Удаление заметки")
     @DeleteMapping("/{noteId}")
     public void deleteNote(@PathVariable("noteId") Long id){
-        noteService.deleteNote(id);
+        Long userId = userService.getCurrentUser().getId();
+        noteService.deleteNote(id, userId);
     }
 
 
@@ -48,6 +54,7 @@ public class NoteController {
     @Operation(summary = "Все заметки пользователя")
     @GetMapping("/")
     public List<NoteModel> getAllUserNotes(){
-        return noteService.getAllUserNotes();
+        Long userId = userService.getCurrentUser().getId();
+        return noteService.getAllUserNotes(userId);
     }
 }

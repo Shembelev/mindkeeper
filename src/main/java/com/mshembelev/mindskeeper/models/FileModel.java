@@ -47,6 +47,4 @@ public class FileModel {
         messageDigest.update(transformedName.getBytes(StandardCharsets.UTF_8));
         this.hash = new BigInteger(1, messageDigest.digest()).toString(RADIX);
     }
-
-
 }
